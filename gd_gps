@@ -1,0 +1,35 @@
+import requests
+import json
+import pandas as pd
+
+
+from requests.adapters import HTTPAdapter
+s = requests.Session()
+s.mount('http://', HTTPAdapter(max_retries=9))
+s.mount('https://', HTTPAdapter(max_retries=9))
+
+
+def get_gps(df):
+    for i in range(0, len(df)):
+        x=float(df.iloc[i]['x'])
+        y=float(df.iloc[i]['y'])
+        url='https://restapi.amap.com/v3/geocode/regeo?key='gscode'&location={},{}'.format(x,y)
+        html=requests.get(url,timeout=None)
+        txt=html.text
+        js=json.loads(txt)
+        sq1=js.get('regeocode').get('addressComponent').get('businessAreas')[0]
+        if sq1:
+            sq2=js.get('regeocode').get('addressComponent').get('businessAreas')[0].get('name')
+            df.loc[i,'sq2']=sq2
+            print(df.iloc[i]['ds'],df.iloc[i]['one'],df.iloc[i]['two'],df.iloc[i]['code'],df.iloc[i]['geekid'],df.iloc[i]['city'],df.iloc[i]['y'],df.iloc[i]['x'],df.iloc[i]['sq2'])
+        pass
+    return df
+
+
+
+if __name__ == '__main__':
+    data=pd.read_table('geek_gps_08.txt',names=['ds','one','two','code','geekid','city','y','x'])
+    print(data.head())
+    data=data.fillna(0)
+    df=get_gps(data)
+    df.to_csv('sq_08.csv',sep=',',encoding='utf-8')
